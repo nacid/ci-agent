@@ -1,0 +1,3 @@
+@{
+    EnvironmentFile = 'environment.psd1'
+}
