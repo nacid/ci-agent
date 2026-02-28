@@ -41,10 +41,6 @@ What it does:
   - Validates required commands are available.
   - Throws if any command is missing.
 
-- `Use-CiAsset -Url <https://...tar.gpg>`
-  - Uses `CI_ASSETS_SPACE` and `CI_ASSETS_PASS`.
-  - Reuses cached assets by hash or downloads/decrypts/extracts and imports scripts.
-
 ## Environment file
 
 `CiUtils` uses `environment.psd1` (name from `assets/CiUtils/CiUtils.psd1`, key `EnvironmentFile`) located next to `$PROFILE`.
