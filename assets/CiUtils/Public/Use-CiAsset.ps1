@@ -21,6 +21,20 @@ function Use-CiAsset {
         }
     }
 
+    function Import-CiAssetModules {
+        param(
+            [Parameter(Mandatory)]
+            [string]$Root
+        )
+
+        $rootPath = (Resolve-Path -LiteralPath $Root -ErrorAction Stop).Path
+        $moduleFiles = Get-ChildItem -LiteralPath $rootPath -Filter '*.psm1' -File -Recurse | Sort-Object FullName
+
+        foreach ($moduleFile in $moduleFiles) {
+            Add-CiModule -Path $moduleFile.FullName
+        }
+    }
+
     $archivePath = $null
     $tmpTarPath = $null
     $targetDir = $null
@@ -51,6 +65,7 @@ function Use-CiAsset {
         $targetDir = Join-Path -Path $assetsSpace -ChildPath $hash
 
         if (Test-Path -LiteralPath $targetDir -PathType Container) {
+            Import-CiAssetModules -Root $targetDir
             Import-CiScripts -Root $targetDir
             Write-Host "HASH: $hash"
             return
@@ -99,6 +114,7 @@ function Use-CiAsset {
     }
 
     try {
+        Import-CiAssetModules -Root $targetDir
         Import-CiScripts -Root $targetDir
         Write-Host "HASH: $hash"
     } catch {
