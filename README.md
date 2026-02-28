@@ -43,7 +43,7 @@ What it does:
 
 - `Use-CiAsset -Url <https://...tar.gpg>`
   - Uses `CI_ASSETS_SPACE` and `CI_ASSETS_PASS`.
-  - Reuses cached assets by hash or downloads/decrypts/extracts and imports scripts.
+  - Reuses cached assets by hash or downloads/decrypts/extracts and imports modules.
 
 ## Environment file
 

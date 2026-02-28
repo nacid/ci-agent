@@ -66,7 +66,6 @@ function Use-CiAsset {
 
         if (Test-Path -LiteralPath $targetDir -PathType Container) {
             Import-CiAssetModules -Root $targetDir
-            Import-CiScripts -Root $targetDir
             Write-Host "HASH: $hash"
             return
         }
@@ -115,7 +114,6 @@ function Use-CiAsset {
 
     try {
         Import-CiAssetModules -Root $targetDir
-        Import-CiScripts -Root $targetDir
         Write-Host "HASH: $hash"
     } catch {
         Write-Warning "warning: import failed: $($_.Exception.Message)"
