@@ -56,6 +56,13 @@ if ($moduleImportLines.Count -gt 0) {
     Set-Content -Path $targetProfilePath -Value $updatedProfileLines -Encoding UTF8NoBOM
 }
 
+$ArtifactsDir = Join-Path $HOME 'Artifacts'
+New-Item -ItemType Directory -Force -Path $ArtifactsDir | Out-Null
+$WoodpeckerLogPath = Join-Path $ArtifactsDir '.woodpecker-current.log'
+if (Test-Path $WoodpeckerLogPath) { 
+	Remove-Item $WoodpeckerLogPath -Force 
+}
+
 . $PROFILE
 
 $agentPath = $null

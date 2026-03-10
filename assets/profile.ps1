@@ -6,3 +6,7 @@ $currentTime = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
 Write-Host "Machine: $machineName"
 Write-Host "Profile created: $profileCreatedAt"
 Write-Host "Current time: $currentTime"
+
+$ArtifactsDir = Join-Path $HOME 'Artifacts' 
+$WoodpeckerLogPath = Join-Path $ArtifactsDir '.woodpecker-current.log'
+Start-Transcript -Path $WoodpeckerLogPath -Append | Out-Null
