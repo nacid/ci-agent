@@ -6,7 +6,7 @@ This repository contains a small PowerShell toolkit for CI bootstrap and reusabl
 
 - `install-ci-profile.ps1` - bootstrap script.
 - `install-ci-profile.psd1` - bootstrap config.
-- `assets/profile.ps1` - profile template copied to `$PROFILE`.
+- `assets/profile.ps1` - profile template copied to `~/profile.ps1`.
 - `assets/agent.psd1` - optional variables source for final `Set-CiVar` pass.
 - `assets/CiUtils` - reusable module with CI helpers.
 
@@ -21,21 +21,21 @@ Run:
 What it does:
 
 1. Reads `install-ci-profile.psd1`.
-2. Copies `Paths.Profile` (from `Paths.Root`) to `$PROFILE`.
+2. Copies `Paths.Profile` (from `Paths.Root`) to `~/profile.ps1`.
 3. Imports modules from `Paths.Modules` (`.psm1` only).
-4. Prepends module import lines (absolute paths) to `$PROFILE`.
-5. Dot-sources `$PROFILE`.
+4. Prepends module import lines (absolute paths) to `~/profile.ps1`.
+5. Dot-sources `~/profile.ps1`.
 6. If `Paths.Agent` exists, reads variables and applies them via `Set-CiVar`.
 
 ## CiUtils commands
 
 - `Add-CiModule -Path <module.psm1>`
   - Imports module if not loaded.
-  - Persists module path to environment file near `$PROFILE`.
+  - Persists module path to environment file near `~/profile.ps1`.
 
 - `Set-CiVar -Name <NAME> -Value <VALUE>`
   - Sets `Env:<NAME>`.
-  - Persists variable in environment file near `$PROFILE`.
+  - Persists variable in environment file near `~/profile.ps1`.
 
 - `Test-CiEnvironment -Commands @('pwsh','git',...)`
   - Validates required commands are available.
@@ -47,7 +47,7 @@ What it does:
 
 ## Environment file
 
-`CiUtils` uses `environment.psd1` (name from `assets/CiUtils/CiUtils.psd1`, key `EnvironmentFile`) located next to `$PROFILE`.
+`CiUtils` uses `environment.psd1` (name from `assets/CiUtils/CiUtils.psd1`, key `EnvironmentFile`) located next to `~/profile.ps1`.
 
 Default shape:
 

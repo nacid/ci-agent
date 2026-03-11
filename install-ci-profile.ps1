@@ -12,7 +12,7 @@ if (-not (Test-Path -Path $sourceProfilePath -PathType Leaf)) {
     throw "Profile script not found: $sourceProfilePath"
 }
 
-$targetProfilePath = $PROFILE
+$targetProfilePath = Join-Path -Path $HOME -ChildPath 'profile.ps1'
 $targetProfileDirectory = Split-Path -Path $targetProfilePath -Parent
 if (-not (Test-Path -Path $targetProfileDirectory -PathType Container)) {
     New-Item -Path $targetProfileDirectory -ItemType Directory -Force | Out-Null
@@ -63,7 +63,7 @@ if (Test-Path $WoodpeckerLogPath) {
 	Remove-Item $WoodpeckerLogPath -Force 
 }
 
-. $PROFILE
+. $targetProfilePath
 
 $agentPath = $null
 if ($config.Paths.ContainsKey('Agent') -and -not [string]::IsNullOrWhiteSpace([string]$config.Paths.Agent)) {

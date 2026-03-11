@@ -12,7 +12,8 @@ function Initialize-CiEnvironmentFile {
         }
     }
 
-    $profileDirectory = Split-Path -Path $PROFILE -Parent
+    $profilePath = Join-Path -Path $HOME -ChildPath 'profile.ps1'
+    $profileDirectory = Split-Path -Path $profilePath -Parent
     if (-not (Test-Path -LiteralPath $profileDirectory -PathType Container)) {
         New-Item -Path $profileDirectory -ItemType Directory -Force | Out-Null
     }
