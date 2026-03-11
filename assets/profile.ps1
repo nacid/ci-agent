@@ -1,11 +1,7 @@
-$profileItem = Get-Item -LiteralPath $PROFILE -ErrorAction SilentlyContinue
 $machineName = [System.Environment]::MachineName
-$profileCreatedAt = if ($profileItem) { $profileItem.CreationTime.ToString('yyyy-MM-dd HH:mm:ss') } else { 'unknown' }
-$currentTime = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+$osName = (Get-CimInstance -ClassName Win32_OperatingSystem).Caption
 
-Write-Host "Machine: $machineName"
-Write-Host "Profile created: $profileCreatedAt"
-Write-Host "Current time: $currentTime"
+Write-Host "$machineName ($osName)"
 
 $ArtifactsDir = Join-Path $HOME 'Artifacts' 
 $WoodpeckerLogPath = Join-Path $ArtifactsDir '.woodpecker-current.log'
