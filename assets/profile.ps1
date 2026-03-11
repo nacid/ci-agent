@@ -14,8 +14,25 @@ if ($IsWindows) {
         }
     }
 }
+elseif ($IsMacOS) {
+    $swVersCommand = Get-Command -Name 'sw_vers' -ErrorAction SilentlyContinue
+    if ($swVersCommand) {
+        try {
+            $productName = (sw_vers -productName).Trim()
+            $productVersion = (sw_vers -productVersion).Trim()
 
-Write-Host "$machineName ($osName)"
+            if (-not [string]::IsNullOrWhiteSpace($productName) -and -not [string]::IsNullOrWhiteSpace($productVersion)) {
+                $osName = "$productName ($productVersion)"
+            }
+            elseif (-not [string]::IsNullOrWhiteSpace($productName)) {
+                $osName = $productName
+            }
+        } catch {
+        }
+    }
+}
+
+Write-Host "$machineName - $osName"
 
 $ArtifactsDir = Join-Path $HOME 'Artifacts' 
 $WoodpeckerLogPath = Join-Path $ArtifactsDir '.woodpecker-current.log'

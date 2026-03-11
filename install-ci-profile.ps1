@@ -57,7 +57,12 @@ if ($moduleImportLines.Count -gt 0) {
 }
 
 $ArtifactsDir = Join-Path $HOME 'Artifacts'
-New-Item -ItemType Directory -Force -Path $ArtifactsDir | Out-Null
+
+if (Test-Path $ArtifactsDir) {
+    Remove-Item $ArtifactsDir -Recurse -Force
+}
+New-Item -ItemType Directory -Path $ArtifactsDir | Out-Null
+
 $WoodpeckerLogPath = Join-Path $ArtifactsDir '.woodpecker-current.log'
 if (Test-Path $WoodpeckerLogPath) { 
 	Remove-Item $WoodpeckerLogPath -Force 
