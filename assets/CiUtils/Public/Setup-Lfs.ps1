@@ -80,7 +80,7 @@ function Setup-Lfs {
 
     try {
         Write-Host "LFS repo id: $RepoId"
-        Write-Host "LFS cache path: $storagePath"
+        Write-Host "LFS cache path: $hash"
 
         Invoke-Git -Args @('lfs', 'install', '--local')
         Invoke-Git -Args @('config', '--local', 'lfs.storage', $storagePath)
