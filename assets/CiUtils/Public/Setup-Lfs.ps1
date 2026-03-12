@@ -26,8 +26,6 @@ function Setup-Lfs {
             $joined = $Args -join ' '
             throw "git $joined failed (exit=$exitCode)"
         }
-
-        return $exitCode
     }
 
     if ([string]::IsNullOrWhiteSpace($RepoId)) {
