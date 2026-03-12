@@ -56,26 +56,6 @@ if ($moduleImportLines.Count -gt 0) {
     Set-Content -Path $targetProfilePath -Value $updatedProfileLines -Encoding UTF8NoBOM
 }
 
-$ArtifactsDir = Join-Path $HOME 'Artifacts'
-
-if (Test-Path $ArtifactsDir) {
-    Remove-Item $ArtifactsDir -Recurse -Force
-}
-
-$ArtifactsTarget = Join-Path $env:CI_ARTIFACTS_SPACE $env:CI_WORKFLOW_NAME
-$ArtifactsTarget = Join-Path $ArtifactsTarget $env:CI_WORKFLOW_NAME
-
-if (-not (Test-Path $ArtifactsTarget)) {
-    New-Item -ItemType Directory -Path $ArtifactsTarget -Force | Out-Null
-}
-
-New-Item -ItemType SymbolicLink -Path $ArtifactsDir -Target $ArtifactsTarget | Out-Null
-
-$WoodpeckerLogPath = Join-Path $ArtifactsDir '.woodpecker-current.log'
-if (Test-Path $WoodpeckerLogPath) { 
-	Remove-Item $WoodpeckerLogPath -Force 
-}
-
 . $targetProfilePath
 
 $agentPath = $null
@@ -140,4 +120,24 @@ if ($agentPath -and (Test-Path -Path $agentPath -PathType Leaf)) {
 
         Set-CiVar -Name $name -Value ([string]$value)
     }
+}
+
+$ArtifactsDir = Join-Path $HOME 'Artifacts'
+
+if (Test-Path $ArtifactsDir) {
+    Remove-Item $ArtifactsDir -Recurse -Force
+}
+
+$ArtifactsTarget = Join-Path $env:CI_ARTIFACTS_SPACE $env:CI_WORKFLOW_NAME
+$ArtifactsTarget = Join-Path $ArtifactsTarget $env:CI_WORKFLOW_NAME
+
+if (-not (Test-Path $ArtifactsTarget)) {
+    New-Item -ItemType Directory -Path $ArtifactsTarget -Force | Out-Null
+}
+
+New-Item -ItemType SymbolicLink -Path $ArtifactsDir -Target $ArtifactsTarget | Out-Null
+
+$WoodpeckerLogPath = Join-Path $ArtifactsDir '.woodpecker-current.log'
+if (Test-Path $WoodpeckerLogPath) { 
+	Remove-Item $WoodpeckerLogPath -Force 
 }
