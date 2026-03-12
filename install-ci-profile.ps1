@@ -61,15 +61,7 @@ $ArtifactsDir = Join-Path $HOME 'Artifacts'
 if (Test-Path $ArtifactsDir) {
     Remove-Item $ArtifactsDir -Recurse -Force
 }
-
-$ArtifactsTarget = Join-Path $env:CI_ARTIFACTS_SPACE $env:CI_WORKFLOW_NAME
-$ArtifactsTarget = Join-Path $ArtifactsTarget $env:CI_WORKFLOW_NAME
-
-if (-not (Test-Path $ArtifactsTarget)) {
-    New-Item -ItemType Directory -Path $ArtifactsTarget -Force | Out-Null
-}
-
-New-Item -ItemType SymbolicLink -Path $ArtifactsDir -Target $ArtifactsTarget | Out-Null
+New-Item -ItemType Directory -Path $ArtifactsDir | Out-Null
 
 $WoodpeckerLogPath = Join-Path $ArtifactsDir '.woodpecker-current.log'
 if (Test-Path $WoodpeckerLogPath) { 
