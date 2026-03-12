@@ -98,10 +98,15 @@ function Setup-Lfs {
         }
 
         # Disable inherited helpers like osxkeychain for this repo.
-        Invoke-Git -Args @('config', '--local', '--unset-all', 'credential.helper') -AllowFailure
-        Invoke-Git -Args @('config', '--local', 'credential.helper', '')
-        Invoke-Git -Args @('config', '--local', '--add', 'credential.helper', "store --file=$credFile")
-        Invoke-Git -Args @('config', '--local', 'credential.useHttpPath', 'true')
+		Invoke-Git -Args @('config', '--local', '--unset-all', 'credential.helper') -AllowFailure
+
+		& git config --local credential.helper ""
+		if ($LASTEXITCODE -ne 0) {
+			throw "git config --local credential.helper `"`" failed (exit=$LASTEXITCODE)"
+		}
+
+		Invoke-Git -Args @('config', '--local', '--add', 'credential.helper', "store --file=$credFile")
+		Invoke-Git -Args @('config', '--local', 'credential.useHttpPath', 'true')
 
         $originUrl = (& git remote get-url origin).Trim()
         if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($originUrl)) {
