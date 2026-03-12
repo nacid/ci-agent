@@ -2,11 +2,36 @@ function Setup-Lfs {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, Position = 0)]
-        [string]$A
+        [string]$RepoId,
+
+        [Parameter(Position = 1)]
+        [string]$Include,
+
+        [Parameter(Position = 2)]
+        [string]$Exclude
     )
 
-    if ([string]::IsNullOrWhiteSpace($A)) {
-        Write-Warning 'warning: A is empty; skipping lfs setup'
+    function Invoke-Git {
+        param(
+            [Parameter(Mandatory)]
+            [string[]]$Args,
+
+            [switch]$AllowFailure
+        )
+
+        & git @Args
+        $exitCode = $LASTEXITCODE
+
+        if (-not $AllowFailure -and $exitCode -ne 0) {
+            $joined = $Args -join ' '
+            throw "git $joined failed (exit=$exitCode)"
+        }
+
+        return $exitCode
+    }
+
+    if ([string]::IsNullOrWhiteSpace($RepoId)) {
+        Write-Warning 'warning: RepoId is empty; skipping lfs setup'
         return
     }
 
@@ -18,13 +43,31 @@ function Setup-Lfs {
 
     $gitUser = $env:GIT_USERNAME
     $gitPass = $env:GIT_PASSWORD
-    if ([string]::IsNullOrWhiteSpace($gitUser) -or [string]::IsNullOrWhiteSpace($gitPass)) {
-        throw 'GIT_USERNAME or GIT_PASSWORD is empty'
+    if ([string]::IsNullOrWhiteSpace($gitUser)) {
+        throw 'GIT_USERNAME is empty'
     }
+    if ([string]::IsNullOrWhiteSpace($gitPass)) {
+        throw 'GIT_PASSWORD is empty'
+    }
+
+    $repoRoot = (& git rev-parse --show-toplevel).Trim()
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($repoRoot)) {
+        throw "git rev-parse --show-toplevel failed (exit=$LASTEXITCODE)"
+    }
+
+    $gitDir = (& git rev-parse --git-dir).Trim()
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($gitDir)) {
+        throw "git rev-parse --git-dir failed (exit=$LASTEXITCODE)"
+    }
+
+    if (-not [System.IO.Path]::IsPathRooted($gitDir)) {
+        $gitDir = Join-Path -Path $repoRoot -ChildPath $gitDir
+    }
+    $gitDir = (Resolve-Path -LiteralPath $gitDir -ErrorAction Stop).Path
 
     $md5 = [System.Security.Cryptography.MD5]::Create()
     try {
-        $bytes = [System.Text.Encoding]::UTF8.GetBytes($A)
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($RepoId)
         $hash = -join ($md5.ComputeHash($bytes) | ForEach-Object { $_.ToString('x2') })
     }
     finally {
@@ -35,28 +78,30 @@ function Setup-Lfs {
     New-Item -ItemType Directory -Path $storagePath -Force | Out-Null
     $storagePath = (Resolve-Path -LiteralPath $storagePath -ErrorAction Stop).Path
 
-    $credFile = Join-Path -Path $PWD -ChildPath '.git/ci-credentials'
+    $credFile = Join-Path -Path $gitDir -ChildPath 'ci-credentials'
 
     try {
-        & git lfs install --local
-        if ($LASTEXITCODE -ne 0) {
-            throw "git lfs install --local failed (exit=$LASTEXITCODE)"
+        Write-Host "LFS repo id: $RepoId"
+        Write-Host "LFS cache path: $storagePath"
+
+        Invoke-Git -Args @('lfs', 'install', '--local')
+        Invoke-Git -Args @('config', '--local', 'lfs.storage', $storagePath)
+
+        if (-not [string]::IsNullOrWhiteSpace($Include)) {
+            Invoke-Git -Args @('config', '--local', 'lfs.fetchinclude', $Include)
+            Write-Host "LFS include: $Include"
         }
 
-        & git config --local lfs.storage $storagePath
-        if ($LASTEXITCODE -ne 0) {
-            throw "git config lfs.storage failed (exit=$LASTEXITCODE)"
+        if (-not [string]::IsNullOrWhiteSpace($Exclude)) {
+            Invoke-Git -Args @('config', '--local', 'lfs.fetchexclude', $Exclude)
+            Write-Host "LFS exclude: $Exclude"
         }
 
-        & git config --local credential.useHttpPath true
-        if ($LASTEXITCODE -ne 0) {
-            throw "git config credential.useHttpPath failed (exit=$LASTEXITCODE)"
-        }
-
-        & git config --local credential.helper "store --file=$credFile"
-        if ($LASTEXITCODE -ne 0) {
-            throw "git config credential.helper failed (exit=$LASTEXITCODE)"
-        }
+        # Disable inherited helpers like osxkeychain for this repo.
+        Invoke-Git -Args @('config', '--local', '--unset-all', 'credential.helper') -AllowFailure
+        Invoke-Git -Args @('config', '--local', 'credential.helper', '')
+        Invoke-Git -Args @('config', '--local', '--add', 'credential.helper', "store --file=$credFile")
+        Invoke-Git -Args @('config', '--local', 'credential.useHttpPath', 'true')
 
         $originUrl = (& git remote get-url origin).Trim()
         if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($originUrl)) {
@@ -64,30 +109,50 @@ function Setup-Lfs {
         }
 
         $uri = [Uri]$originUrl
-        $baseUrl = "{0}://{1}" -f $uri.Scheme, $uri.Host
-        $path = $uri.AbsolutePath
-
-        @"
+        $credentialPayload = @"
 protocol=$($uri.Scheme)
 host=$($uri.Host)
-path=$path
+path=$($uri.AbsolutePath)
 username=$gitUser
 password=$gitPass
 
-"@ | & git credential approve
+"@
 
+        $credentialPayload | & git credential approve
         if ($LASTEXITCODE -ne 0) {
             throw "git credential approve failed (exit=$LASTEXITCODE)"
         }
 
-        & git lfs pull
-        if ($LASTEXITCODE -ne 0) {
-            throw "git lfs pull failed (exit=$LASTEXITCODE)"
+        Write-Host "Git credential helpers:"
+        Invoke-Git -Args @('config', '--show-origin', '--get-all', 'credential.helper') -AllowFailure | Out-Null
+
+        Write-Host "Running git lfs pull..."
+        if ([string]::IsNullOrWhiteSpace($Include) -and [string]::IsNullOrWhiteSpace($Exclude)) {
+            Invoke-Git -Args @('lfs', 'pull')
         }
+        else {
+            $pullArgs = @('lfs', 'pull')
+
+            if (-not [string]::IsNullOrWhiteSpace($Include)) {
+                $pullArgs += "--include=$Include"
+            }
+
+            if (-not [string]::IsNullOrWhiteSpace($Exclude)) {
+                $pullArgs += "--exclude=$Exclude"
+            }
+
+            Invoke-Git -Args $pullArgs
+        }
+
+        Write-Host 'LFS setup completed successfully.'
     }
     finally {
         if (Test-Path -LiteralPath $credFile) {
             Remove-Item -LiteralPath $credFile -Force -ErrorAction SilentlyContinue
         }
+
+        # Remove repo-local credential helper configuration so nothing persists unexpectedly.
+        & git config --local --unset-all credential.helper 2>$null
+        & git config --local --unset credential.useHttpPath 2>$null
     }
 }
