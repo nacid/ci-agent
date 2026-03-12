@@ -68,6 +68,9 @@ if (Test-Path $WoodpeckerLogPath) {
 	Remove-Item $WoodpeckerLogPath -Force 
 }
 
+Set-CiVar PATH_ARTIFACTS $ArtifactsDir
+Set-CiVar PATH_LOG $WoodpeckerLogPath
+
 . $targetProfilePath
 
 $agentPath = $null

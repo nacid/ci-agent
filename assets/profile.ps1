@@ -34,6 +34,4 @@ elseif ($IsMacOS) {
 
 Write-Host "$machineName - $osName"
 
-$ArtifactsDir = Join-Path $HOME 'Artifacts' 
-$WoodpeckerLogPath = Join-Path $ArtifactsDir '.woodpecker-current.log'
-Start-Transcript -Path $WoodpeckerLogPath -Append | Out-Null
+Start-Transcript -Path $env:PATH_LOG -Append | Out-Null
